@@ -391,17 +391,27 @@ summary {
 </div>
 
 
-<pre class="r"><code>library(tidyverse)</code></pre>
-<pre><code>## -- Attaching packages --------------------------------------- tidyverse 1.3.0 --</code></pre>
-<pre><code>## v ggplot2 3.3.2     v purrr   0.3.4
-## v tibble  3.0.3     v dplyr   1.0.2
-## v tidyr   1.1.2     v stringr 1.4.0
-## v readr   1.4.0     v forcats 0.5.0</code></pre>
-<pre><code>## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(nnet)
+library(MASS)</code></pre>
+<pre><code>## Warning: package &#39;MASS&#39; was built under R version 4.0.3</code></pre>
+<pre><code>## 
+## Attaching package: &#39;MASS&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:dplyr&#39;:
+## 
+##     select</code></pre>
+<div id="section" class="section level4">
+<h4>1)</h4>
 <pre class="r"><code>contact_level = c(rep(&quot;low&quot;, 3), rep(&quot;high&quot;,3))
-house_type=rep(c(&quot;Tower block&quot;, &quot;Apartment&quot;, &quot;House&quot;), 2)
+house_type = rep(c(&quot;Tower block&quot;, &quot;Apartment&quot;, &quot;House&quot;), 2)
 sat_low = c(65,130,67,34,141,130)
 sat_med = c(54,76,48,47,116,105)
 sat_high = c(100,111,62,100,191,104)
@@ -409,20 +419,40 @@ sat_high = c(100,111,62,100,191,104)
 housing_df =
   tibble(contact_level,house_type,sat_low,sat_med,sat_high) %&gt;%
   mutate(
-    total = sat_low + sat_med+ sat_high,
-    sat_low_pct = (sat_low/total)*100,
-    sat_med_pct = (sat_med/total)*100,
-    sat_high_pct = (sat_high/total)*100
-         ) %&gt;%
-  select(contact_level,house_type,sat_low_pct,sat_med_pct, sat_high_pct) %&gt;%
-  knitr::kable()
+    total = sat_low + sat_med + sat_high,
+    contact_level = as.factor(contact_level),
+    house_type = as.factor(house_type)
+         )
+  
 
-housing_df</code></pre>
+#Table of percentages showing the pair-wise associations between satisfaction and contact level
+housing_df %&gt;% dplyr::select(contact_level,sat_low,sat_med, sat_high) %&gt;%
+  tidyr::pivot_longer(cols = starts_with(&quot;sat&quot;),
+               names_to = &quot;sat_level&quot;,
+               names_prefix = &quot;sat_&quot;,
+               values_to = &quot;freq&quot;) %&gt;%
+  group_by(contact_level,sat_level) %&gt;%
+  summarise(
+    total = sum(freq)
+  ) %&gt;%
+  tidyr::pivot_wider(
+    names_from = sat_level,
+    values_from = total,
+    names_prefix = &quot;sat_&quot;
+  ) %&gt;%
+  mutate(total_freq = sat_high + sat_low + sat_med,
+         sat_low_pct = (sat_low/total_freq)*100,
+         sat_med_pct = (sat_med/total_freq)*100,
+         sat_high_pct = (sat_high/total_freq)*100
+         ) %&gt;%
+  dplyr::select(contact_level,total_freq,sat_low_pct,sat_med_pct,sat_high_pct) %&gt;%
+  knitr::kable()</code></pre>
+<pre><code>## `summarise()` regrouping output by &#39;contact_level&#39; (override with `.groups` argument)</code></pre>
 <table>
 <thead>
 <tr class="header">
 <th align="left">contact_level</th>
-<th align="left">house_type</th>
+<th align="right">total_freq</th>
 <th align="right">sat_low_pct</th>
 <th align="right">sat_med_pct</th>
 <th align="right">sat_high_pct</th>
@@ -430,49 +460,152 @@ housing_df</code></pre>
 </thead>
 <tbody>
 <tr class="odd">
-<td align="left">low</td>
-<td align="left">Tower block</td>
-<td align="right">29.68037</td>
-<td align="right">24.65753</td>
-<td align="right">45.66210</td>
+<td align="left">high</td>
+<td align="right">968</td>
+<td align="right">31.50826</td>
+<td align="right">27.68595</td>
+<td align="right">40.80579</td>
 </tr>
 <tr class="even">
 <td align="left">low</td>
-<td align="left">Apartment</td>
-<td align="right">41.00946</td>
-<td align="right">23.97476</td>
-<td align="right">35.01577</td>
-</tr>
-<tr class="odd">
-<td align="left">low</td>
-<td align="left">House</td>
-<td align="right">37.85311</td>
-<td align="right">27.11864</td>
-<td align="right">35.02825</td>
-</tr>
-<tr class="even">
-<td align="left">high</td>
-<td align="left">Tower block</td>
-<td align="right">18.78453</td>
-<td align="right">25.96685</td>
-<td align="right">55.24862</td>
-</tr>
-<tr class="odd">
-<td align="left">high</td>
-<td align="left">Apartment</td>
-<td align="right">31.47321</td>
-<td align="right">25.89286</td>
-<td align="right">42.63393</td>
-</tr>
-<tr class="even">
-<td align="left">high</td>
-<td align="left">House</td>
-<td align="right">38.34808</td>
-<td align="right">30.97345</td>
-<td align="right">30.67847</td>
+<td align="right">713</td>
+<td align="right">36.74614</td>
+<td align="right">24.96494</td>
+<td align="right">38.28892</td>
 </tr>
 </tbody>
 </table>
+<pre class="r"><code>#Table of percentages showing the pair-wise associations between satisfaction and house type
+housing_df %&gt;% dplyr::select(house_type,sat_low,sat_med, sat_high) %&gt;%
+  tidyr::pivot_longer(cols = starts_with(&quot;sat&quot;),
+               names_to = &quot;sat_level&quot;,
+               names_prefix = &quot;sat_&quot;,
+               values_to = &quot;freq&quot;) %&gt;%
+  group_by(house_type,sat_level) %&gt;%
+  summarise(
+    total = sum(freq)
+  ) %&gt;%
+  tidyr::pivot_wider(
+    names_from = sat_level,
+    values_from = total,
+    names_prefix = &quot;sat_&quot;
+  ) %&gt;%
+  mutate(total_freq = sat_high + sat_low + sat_med,
+         sat_low_pct = (sat_low/total_freq)*100,
+         sat_med_pct = (sat_med/total_freq)*100,
+         sat_high_pct = (sat_high/total_freq)*100
+         ) %&gt;%
+  dplyr::select(house_type,total_freq,sat_low_pct,sat_med_pct,sat_high_pct) %&gt;%
+  knitr::kable()</code></pre>
+<pre><code>## `summarise()` regrouping output by &#39;house_type&#39; (override with `.groups` argument)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="left">house_type</th>
+<th align="right">total_freq</th>
+<th align="right">sat_low_pct</th>
+<th align="right">sat_med_pct</th>
+<th align="right">sat_high_pct</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Apartment</td>
+<td align="right">765</td>
+<td align="right">35.42484</td>
+<td align="right">25.09804</td>
+<td align="right">39.47712</td>
+</tr>
+<tr class="even">
+<td align="left">House</td>
+<td align="right">516</td>
+<td align="right">38.17829</td>
+<td align="right">29.65116</td>
+<td align="right">32.17054</td>
+</tr>
+<tr class="odd">
+<td align="left">Tower block</td>
+<td align="right">400</td>
+<td align="right">24.75000</td>
+<td align="right">25.25000</td>
+<td align="right">50.00000</td>
+</tr>
+</tbody>
+</table>
+<p>Among residents with low contact level, residents living in apartment appear to have higher probability to have low satisfaction comparing to residents living in tower block and house; residents living in tower block appear to have higher probability to have high satisfaction comparing to residents living in apartment and house. On the other hand, among residents with high contact level, residents living in house appear to have higher probability to have low satisfaction comparing to residents living in tower block and house;residents living in tower block appear to have higher probability to have high satisfaction comparing to residents living in apartment and house.</p>
+</div>
+<div id="section-1" class="section level4">
+<h4>2)</h4>
+<pre class="r"><code>housing_nomial = multinom(cbind(sat_low, sat_med, sat_high)~contact_level+house_type, data = housing_df)</code></pre>
+<pre><code>## # weights:  15 (8 variable)
+## initial  value 1846.767257 
+## iter  10 value 1803.046285
+## final  value 1802.740161 
+## converged</code></pre>
+<pre class="r"><code>summary(housing_nomial)</code></pre>
+<pre><code>## Call:
+## multinom(formula = cbind(sat_low, sat_med, sat_high) ~ contact_level + 
+##     house_type, data = housing_df)
+## 
+## Coefficients:
+##          (Intercept) contact_levellow house_typeHouse house_typeTower block
+## sat_med   -0.2180364       -0.2959832      0.06967922             0.4067631
+## sat_high   0.2474047       -0.3282264     -0.30402275             0.6415948
+## 
+## Std. Errors:
+##          (Intercept) contact_levellow house_typeHouse house_typeTower block
+## sat_med   0.10930968        0.1301046       0.1437749             0.1713009
+## sat_high  0.09783068        0.1181870       0.1351693             0.1500774
+## 
+## Residual Deviance: 3605.48 
+## AIC: 3621.48</code></pre>
+<pre class="r"><code># goodness of fit
+pihat=predict(housing_nomial,type=&#39;probs&#39;) 
+m=rowSums(housing_df[,3:5])
+res.pearson=(housing_df[,3:5]-pihat*m)/sqrt(pihat*m) # pearson residuals 
+
+G.stat=sum(res.pearson^2) # Generalized Pearson Chisq Stat
+G.stat</code></pre>
+<pre><code>## [1] 6.932341</code></pre>
+<pre class="r"><code>pval=1-pchisq(G.stat,df=(6-4)*(3-1)) 
+pval# fit is good</code></pre>
+<pre><code>## [1] 0.1395072</code></pre>
+</div>
+<div id="section-2" class="section level4">
+<h4>3）</h4>
+<pre class="r"><code>#create a dataframe in long format which can be used in proportional odds model
+housing_df_long = 
+  housing_df %&gt;%
+  dplyr::select(contact_level,house_type,sat_low,sat_med, sat_high) %&gt;%
+  tidyr::pivot_longer(cols = starts_with(&quot;sat&quot;),
+               names_to = &quot;sat_level&quot;,
+               names_prefix = &quot;sat_&quot;,
+               values_to = &quot;freq&quot;) %&gt;%
+  mutate(sat_level = factor(sat_level,levels = c(&quot;low&quot;, &quot;med&quot;, &quot;high&quot;)))
+
+# fit proportional odds model
+housing_ordinal = polr(sat_level~contact_level+house_type,data = housing_df_long,weights = freq)
+summary(housing_ordinal)</code></pre>
+<pre><code>## 
+## Re-fitting to get Hessian</code></pre>
+<pre><code>## Call:
+## polr(formula = sat_level ~ contact_level + house_type, data = housing_df_long, 
+##     weights = freq)
+## 
+## Coefficients:
+##                         Value Std. Error t value
+## contact_levellow      -0.2524    0.09306  -2.713
+## house_typeHouse       -0.2353    0.10521  -2.236
+## house_typeTower block  0.5010    0.11675   4.291
+## 
+## Intercepts:
+##          Value   Std. Error t value
+## low|med  -0.7488  0.0818    -9.1570
+## med|high  0.3637  0.0801     4.5393
+## 
+## Residual Deviance: 3610.286 
+## AIC: 3620.286</code></pre>
+</div>
 
 
 

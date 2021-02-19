@@ -6,12 +6,16 @@ output: html_document
 ---
 
 ```{r}
-library(tidyverse)
+library(dplyr)
+library(nnet)
+library(MASS)
 ```
 
-```{r}
+#### 1)
+
+```{r table}
 contact_level = c(rep("low", 3), rep("high",3))
-house_type=rep(c("Tower block", "Apartment", "House"), 2)
+house_type = rep(c("Tower block", "Apartment", "House"), 2)
 sat_low = c(65,130,67,34,141,130)
 sat_med = c(54,76,48,47,116,105)
 sat_high = c(100,111,62,100,191,104)
@@ -19,14 +23,94 @@ sat_high = c(100,111,62,100,191,104)
 housing_df =
   tibble(contact_level,house_type,sat_low,sat_med,sat_high) %>%
   mutate(
-    total = sat_low + sat_med+ sat_high,
-    sat_low_pct = (sat_low/total)*100,
-    sat_med_pct = (sat_med/total)*100,
-    sat_high_pct = (sat_high/total)*100
+    total = sat_low + sat_med + sat_high,
+    contact_level = as.factor(contact_level),
+    house_type = as.factor(house_type)
+         )
+  
+
+#Table of percentages showing the pair-wise associations between satisfaction and contact level
+housing_df %>% dplyr::select(contact_level,sat_low,sat_med, sat_high) %>%
+  tidyr::pivot_longer(cols = starts_with("sat"),
+               names_to = "sat_level",
+               names_prefix = "sat_",
+               values_to = "freq") %>%
+  group_by(contact_level,sat_level) %>%
+  summarise(
+    total = sum(freq)
+  ) %>%
+  tidyr::pivot_wider(
+    names_from = sat_level,
+    values_from = total,
+    names_prefix = "sat_"
+  ) %>%
+  mutate(total_freq = sat_high + sat_low + sat_med,
+         sat_low_pct = (sat_low/total_freq)*100,
+         sat_med_pct = (sat_med/total_freq)*100,
+         sat_high_pct = (sat_high/total_freq)*100
          ) %>%
-  select(contact_level,house_type,sat_low_pct,sat_med_pct, sat_high_pct) %>%
+  dplyr::select(contact_level,total_freq,sat_low_pct,sat_med_pct,sat_high_pct) %>%
   knitr::kable()
 
-housing_df
+#Table of percentages showing the pair-wise associations between satisfaction and house type
+housing_df %>% dplyr::select(house_type,sat_low,sat_med, sat_high) %>%
+  tidyr::pivot_longer(cols = starts_with("sat"),
+               names_to = "sat_level",
+               names_prefix = "sat_",
+               values_to = "freq") %>%
+  group_by(house_type,sat_level) %>%
+  summarise(
+    total = sum(freq)
+  ) %>%
+  tidyr::pivot_wider(
+    names_from = sat_level,
+    values_from = total,
+    names_prefix = "sat_"
+  ) %>%
+  mutate(total_freq = sat_high + sat_low + sat_med,
+         sat_low_pct = (sat_low/total_freq)*100,
+         sat_med_pct = (sat_med/total_freq)*100,
+         sat_high_pct = (sat_high/total_freq)*100
+         ) %>%
+  dplyr::select(house_type,total_freq,sat_low_pct,sat_med_pct,sat_high_pct) %>%
+  knitr::kable()
+
 ```
 
+Among residents with low contact level, residents living in apartment appear to have higher probability to have low satisfaction comparing to residents living in tower block and house; residents living in tower block appear to have higher probability to have high satisfaction comparing to residents living in apartment and house. On the other hand, among residents with high contact level, residents living in house appear to have higher probability to have low satisfaction comparing to residents living in tower block and house;residents living in tower block appear to have higher probability to have high satisfaction comparing to residents living in apartment and house. 
+
+#### 2)
+
+```{r nomial logistic regression}
+housing_nomial = multinom(cbind(sat_low, sat_med, sat_high)~contact_level+house_type, data = housing_df)
+summary(housing_nomial)
+```
+```{r}
+# goodness of fit
+pihat=predict(housing_nomial,type='probs') 
+m=rowSums(housing_df[,3:5])
+res.pearson=(housing_df[,3:5]-pihat*m)/sqrt(pihat*m) # pearson residuals 
+
+G.stat=sum(res.pearson^2) # Generalized Pearson Chisq Stat
+G.stat
+
+pval=1-pchisq(G.stat,df=(6-4)*(3-1)) 
+pval# fit is good
+```
+
+#### 3）
+```{r ordinal logistic regression}
+#create a dataframe in long format which can be used in proportional odds model
+housing_df_long = 
+  housing_df %>%
+  dplyr::select(contact_level,house_type,sat_low,sat_med, sat_high) %>%
+  tidyr::pivot_longer(cols = starts_with("sat"),
+               names_to = "sat_level",
+               names_prefix = "sat_",
+               values_to = "freq") %>%
+  mutate(sat_level = factor(sat_level,levels = c("low", "med", "high")))
+
+# fit proportional odds model
+housing_ordinal = polr(sat_level~contact_level+house_type,data = housing_df_long,weights = freq)
+summary(housing_ordinal)
+```
