@@ -536,13 +536,14 @@ housing_df %&gt;% dplyr::select(house_type,sat_low,sat_med, sat_high) %&gt;%
 </div>
 <div id="section-1" class="section level4">
 <h4>2)</h4>
-<pre class="r"><code>housing_nomial = multinom(cbind(sat_low, sat_med, sat_high)~contact_level+house_type, data = housing_df)</code></pre>
+<pre class="r"><code>housing_nominal = multinom(cbind(sat_low, sat_med, sat_high)~contact_level+house_type, data = housing_df)</code></pre>
 <pre><code>## # weights:  15 (8 variable)
 ## initial  value 1846.767257 
 ## iter  10 value 1803.046285
 ## final  value 1802.740161 
 ## converged</code></pre>
-<pre class="r"><code>summary(housing_nomial)</code></pre>
+<pre class="r"><code># fit nominal logistic regression
+summary(housing_nominal)</code></pre>
 <pre><code>## Call:
 ## multinom(formula = cbind(sat_low, sat_med, sat_high) ~ contact_level + 
 ##     house_type, data = housing_df)
@@ -560,16 +561,19 @@ housing_df %&gt;% dplyr::select(house_type,sat_low,sat_med, sat_high) %&gt;%
 ## Residual Deviance: 3605.48 
 ## AIC: 3621.48</code></pre>
 <pre class="r"><code># exponentiate the coefficients for interpretations
-exp(summary(housing_nomial)$coefficients)</code></pre>
+exp(summary(housing_nominal)$coefficients)</code></pre>
 <pre><code>##          (Intercept) contact_levellow house_typeHouse house_typeTower_block
 ## sat_med    0.8040962        0.7437999       1.0721642              1.501948
 ## sat_high   1.2806973        0.7201999       0.7378441              1.899508</code></pre>
+<p>The odds for having medium satisfaction among residents with high contact level and living in the apartments is 0.8040962 and The odds for having high satisfaction among residents with high contact level and living in the apartments is 1.2806973.</p>
+<p>the odds ratio of low satisfaction vs medium satisfaction between residents with low contact level and residents with high contact level is 0.7437999; the odds ratio of low satisfaction vs medium satisfaction between residents living in the house and residents not living in the house is 1.0721642; the odds ratio of low satisfaction vs medium satisfaction between residents living in the tower block and residents not living in the tower block is 1.501948.</p>
+<p>the odds ratio of low satisfaction vs high satisfaction between residents with low contact level and residents with high contact level is 0.7201999; the odds ratio of low satisfaction vs high satisfaction between residents living in the house and residents not living in the house is 0.7378441; the odds ratio of low satisfaction vs high satisfaction between residents living in the tower block and residents not living in the tower block is 1.899508.</p>
 <pre class="r"><code>#odds ratio with 95% confidence interval
 coef_df = 
-  summary(housing_nomial)$coefficients
+  summary(housing_nominal)$coefficients
 
 std_err_df=
-  summary(housing_nomial)$standard.errors %&gt;%
+  summary(housing_nominal)$standard.errors %&gt;%
   as_tibble() %&gt;%
   dplyr::select(-1) %&gt;%
   tidyr::pivot_longer(cols = c(contact_levellow, house_typeHouse, house_typeTower_block),
@@ -654,7 +658,7 @@ or_ci %&gt;%
 </table>
 <p>The table with exponential point estimates and confidence intervals for odds ratios is shown above.</p>
 <pre class="r"><code># goodness of fit
-pihat=predict(housing_nomial,type=&#39;probs&#39;) 
+pihat=predict(housing_nominal,type=&#39;probs&#39;) 
 m=rowSums(housing_df[,3:5])
 res_pearson=(housing_df[,3:5]-pihat*m)/sqrt(pihat*m) # pearson residuals 
 

@@ -2,7 +2,11 @@
 title: "p8131_hw4_ps3194"
 author: "Pangsibo Shen"
 date: "2/19/2021"
-output: html_document
+output: 
+  bookdown::pdf_document2:
+    latex_engine: lualatex
+  tufte::tufte_handout:
+    latex_engine: xelatex
 ---
 
 ```{r}
@@ -81,22 +85,27 @@ From table of percentages showing the pair-wise associations between satisfactio
 
 #### 2)
 
-```{r nomial logistic regression}
-housing_nomial = multinom(cbind(sat_low, sat_med, sat_high)~contact_level+house_type, data = housing_df)
-summary(housing_nomial)
+```{r nominal logistic regression}
+housing_nominal = multinom(cbind(sat_low, sat_med, sat_high)~contact_level+house_type, data = housing_df)
+# fit nominal logistic regression
+summary(housing_nominal)
 
 # exponentiate the coefficients for interpretations
-exp(summary(housing_nomial)$coefficients)
+exp(summary(housing_nominal)$coefficients)
 ```
+The odds for having medium satisfaction among residents with high contact level and living in the apartments is 0.8040962 and The odds for having high satisfaction among residents with high contact level and living in the apartments is 1.2806973.
 
+the odds ratio of low satisfaction vs medium satisfaction between residents with low contact level and residents with high contact level is 0.7437999; the odds ratio of low satisfaction vs medium satisfaction between residents living in the house and residents not living in the house is 1.0721642; the odds ratio of low satisfaction vs medium satisfaction between residents living in the tower block and residents not living in the tower block is 1.501948.
+
+the odds ratio of low satisfaction vs high satisfaction between residents with low contact level and residents with high contact level is 0.7201999; the odds ratio of low satisfaction vs high satisfaction between residents living in the house and residents not living in the house is 0.7378441; the odds ratio of low satisfaction vs high satisfaction between residents living in the tower block and residents not living in the tower block is 1.899508.
 
 ```{r confidence interval}
 #odds ratio with 95% confidence interval
 coef_df = 
-  summary(housing_nomial)$coefficients
+  summary(housing_nominal)$coefficients
 
 std_err_df=
-  summary(housing_nomial)$standard.errors %>%
+  summary(housing_nominal)$standard.errors %>%
   as_tibble() %>%
   dplyr::select(-1) %>%
   tidyr::pivot_longer(cols = c(contact_levellow, house_typeHouse, house_typeTower_block),
@@ -124,7 +133,7 @@ The table with exponential point estimates and confidence intervals for odds rat
 
 ```{r goodness of fit}
 # goodness of fit
-pihat=predict(housing_nomial,type='probs') 
+pihat=predict(housing_nominal,type='probs') 
 m=rowSums(housing_df[,3:5])
 res_pearson=(housing_df[,3:5]-pihat*m)/sqrt(pihat*m) # pearson residuals 
 
