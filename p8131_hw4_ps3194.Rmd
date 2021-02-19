@@ -15,7 +15,7 @@ library(MASS)
 
 ```{r table}
 contact_level = c(rep("low", 3), rep("high",3))
-house_type = rep(c("Tower block", "Apartment", "House"), 2)
+house_type = rep(c("Tower_block", "Apartment", "House"), 2)
 sat_low = c(65,130,67,34,141,130)
 sat_med = c(54,76,48,47,116,105)
 sat_high = c(100,111,62,100,191,104)
@@ -23,7 +23,6 @@ sat_high = c(100,111,62,100,191,104)
 housing_df =
   tibble(contact_level,house_type,sat_low,sat_med,sat_high) %>%
   mutate(
-    total = sat_low + sat_med + sat_high,
     contact_level = as.factor(contact_level),
     house_type = as.factor(house_type)
          )
@@ -85,20 +84,52 @@ Among residents with low contact level, residents living in apartment appear to 
 housing_nomial = multinom(cbind(sat_low, sat_med, sat_high)~contact_level+house_type, data = housing_df)
 summary(housing_nomial)
 ```
-```{r}
+
+
+```{r confidence interval}
+#odds ratio with 95% confidence interval
+coef_df = 
+  summary(housing_nomial)$coefficients
+
+std_err_df=
+  summary(housing_nomial)$standard.errors %>%
+  as_tibble() %>%
+  dplyr::select(-1) %>%
+  tidyr::pivot_longer(cols = c(contact_levellow, house_typeHouse, house_typeTower_block),
+               names_to = "covariates",
+               values_to = "std_err") %>%
+  dplyr::select(std_err)
+
+or_ci =
+  tibble(
+    term = c("med_sat_contactLow","med_sat_typehouse","med_sat_typetowerblock","high_sat_contactLow","high_sat_typehouse","high_sat_typetowerblock"),
+    point_est = c(coef_df[3],coef_df[5],coef_df[7],coef_df[4],coef_df[6],coef_df[8]),
+    std_err_df
+  ) %>%
+  mutate(
+    exp_point_est = exp(point_est),
+    lower_exp_ci = exp(point_est + qnorm(0.025)*std_err),
+    higher_exp_ci = exp(point_est - qnorm(0.025)*std_err)
+  )
+or_ci %>%
+  knitr::kable()
+```
+
+```{r goodness of fit}
 # goodness of fit
 pihat=predict(housing_nomial,type='probs') 
 m=rowSums(housing_df[,3:5])
-res.pearson=(housing_df[,3:5]-pihat*m)/sqrt(pihat*m) # pearson residuals 
+res_pearson=(housing_df[,3:5]-pihat*m)/sqrt(pihat*m) # pearson residuals 
 
-G.stat=sum(res.pearson^2) # Generalized Pearson Chisq Stat
-G.stat
+G_stat=sum(res_pearson^2) # Generalized Pearson Chisq Stat
+G_stat
 
-pval=1-pchisq(G.stat,df=(6-4)*(3-1)) 
+pval=1-pchisq(G_stat,df = (6-4)*(3-1)) 
 pval# fit is good
 ```
 
 #### 3）
+
 ```{r ordinal logistic regression}
 #create a dataframe in long format which can be used in proportional odds model
 housing_df_long = 
@@ -111,6 +142,21 @@ housing_df_long =
   mutate(sat_level = factor(sat_level,levels = c("low", "med", "high")))
 
 # fit proportional odds model
-housing_ordinal = polr(sat_level~contact_level+house_type,data = housing_df_long,weights = freq)
-summary(housing_ordinal)
+housing_prop = polr(sat_level~contact_level+house_type,data = housing_df_long,weights = freq)
+summary(housing_prop)
 ```
+
+#### 4）
+
+```{r pearson residuals}
+pi_prop = predict(housing_prop,housing_df, type = "p")
+m_prop = rowSums(housing_df[,3:5])
+res_pearson_prop = (housing_df[,3:5]-pi_prop*m_prop)/sqrt(pi_prop*m_prop)
+res_pearson_prop %>%
+  mutate(
+    contact = c(rep("low", 3), rep("high",3)),
+    house_type = rep(c("Tower_block", "Apartment", "House"), 2)
+  ) %>%
+  knitr::kable()
+```
+
