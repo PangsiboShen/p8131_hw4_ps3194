@@ -531,7 +531,8 @@ housing_df %&gt;% dplyr::select(house_type,sat_low,sat_med, sat_high) %&gt;%
 </tr>
 </tbody>
 </table>
-<p>Among residents with low contact level, residents living in apartment appear to have higher probability to have low satisfaction comparing to residents living in tower block and house; residents living in tower block appear to have higher probability to have high satisfaction comparing to residents living in apartment and house. On the other hand, among residents with high contact level, residents living in house appear to have higher probability to have low satisfaction comparing to residents living in tower block and house;residents living in tower block appear to have higher probability to have high satisfaction comparing to residents living in apartment and house.</p>
+<p>From the table of percentages showing the pair-wise associations between satisfaction and contact level, we learned that among residents with high contact level, residents appear to have higher probability to have high satisfaction and among residents with low contact level, residents appear to have the lowest probability to have medium satisfaction.</p>
+<p>From table of percentages showing the pair-wise associations between satisfaction and house type, we learned that among residents living in the apartments, residents appear to have higher probability to have high satisfaction;among residents living in the houses, residents appear to have the highest probability to have low satisfaction; among residents living in the Tower block, residents appear to have the highest probability to have high satisfaction.</p>
 </div>
 <div id="section-1" class="section level4">
 <h4>2)</h4>
@@ -558,6 +559,11 @@ housing_df %&gt;% dplyr::select(house_type,sat_low,sat_med, sat_high) %&gt;%
 ## 
 ## Residual Deviance: 3605.48 
 ## AIC: 3621.48</code></pre>
+<pre class="r"><code># exponentiate the coefficients for interpretations
+exp(summary(housing_nomial)$coefficients)</code></pre>
+<pre><code>##          (Intercept) contact_levellow house_typeHouse house_typeTower_block
+## sat_med    0.8040962        0.7437999       1.0721642              1.501948
+## sat_high   1.2806973        0.7201999       0.7378441              1.899508</code></pre>
 <pre class="r"><code>#odds ratio with 95% confidence interval
 coef_df = 
   summary(housing_nomial)$coefficients
@@ -646,6 +652,7 @@ or_ci %&gt;%
 </tr>
 </tbody>
 </table>
+<p>The table with exponential point estimates and confidence intervals for odds ratios is shown above.</p>
 <pre class="r"><code># goodness of fit
 pihat=predict(housing_nomial,type=&#39;probs&#39;) 
 m=rowSums(housing_df[,3:5])
@@ -657,6 +664,7 @@ G_stat</code></pre>
 <pre class="r"><code>pval=1-pchisq(G_stat,df = (6-4)*(3-1)) 
 pval# fit is good</code></pre>
 <pre><code>## [1] 0.1395072</code></pre>
+<p>Since the p-value for Generalized Pearson Chisq Statistic is greater than 0.05, we can conclude that our model is a good fit.</p>
 </div>
 <div id="section-2" class="section level4">
 <h4>3）</h4>

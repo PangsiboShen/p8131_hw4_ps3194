@@ -75,14 +75,18 @@ housing_df %>% dplyr::select(house_type,sat_low,sat_med, sat_high) %>%
   knitr::kable()
 
 ```
+From the table of percentages showing the pair-wise associations between satisfaction and contact level, we learned that among residents with high contact level, residents appear to have higher probability to have high satisfaction and among residents with low contact level, residents appear to have the lowest probability to have medium satisfaction. 
 
-Among residents with low contact level, residents living in apartment appear to have higher probability to have low satisfaction comparing to residents living in tower block and house; residents living in tower block appear to have higher probability to have high satisfaction comparing to residents living in apartment and house. On the other hand, among residents with high contact level, residents living in house appear to have higher probability to have low satisfaction comparing to residents living in tower block and house;residents living in tower block appear to have higher probability to have high satisfaction comparing to residents living in apartment and house. 
+From table of percentages showing the pair-wise associations between satisfaction and house type, we learned that among residents living in the apartments, residents appear to have higher probability to have high satisfaction;among residents living in the houses, residents appear to have the highest probability to have low satisfaction; among residents living in the Tower block, residents appear to have the highest probability to have high satisfaction.
 
 #### 2)
 
 ```{r nomial logistic regression}
 housing_nomial = multinom(cbind(sat_low, sat_med, sat_high)~contact_level+house_type, data = housing_df)
 summary(housing_nomial)
+
+# exponentiate the coefficients for interpretations
+exp(summary(housing_nomial)$coefficients)
 ```
 
 
@@ -115,6 +119,9 @@ or_ci %>%
   knitr::kable()
 ```
 
+The table with exponential point estimates and confidence intervals for odds ratios is shown above. 
+
+
 ```{r goodness of fit}
 # goodness of fit
 pihat=predict(housing_nomial,type='probs') 
@@ -127,6 +134,7 @@ G_stat
 pval=1-pchisq(G_stat,df = (6-4)*(3-1)) 
 pval# fit is good
 ```
+Since the p-value for Generalized Pearson Chisq Statistic is greater than 0.05, we can conclude that our model is a good fit.
 
 #### 3）
 
