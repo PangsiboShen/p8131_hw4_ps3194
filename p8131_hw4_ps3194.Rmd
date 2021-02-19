@@ -144,7 +144,13 @@ housing_df_long =
 # fit proportional odds model
 housing_prop = polr(sat_level~contact_level+house_type,data = housing_df_long,weights = freq)
 summary(housing_prop)
+
+# exponentiate the coefficients for interpretations
+exp(0.2524) #contact_levellow
+exp(0.2353) #house_typeHouse       
+exp(-0.5010) #house_typeTower_block  
 ```
+The fitted model told us that: the odds ratio of low satisfaction vs medium/high satisfaction between residents with low contact level and residents with high contact level is `r exp(0.2524)`, while holding other variable fixed;the odds ratio of low satisfaction vs medium/high satisfaction between residents living in house and residents not living in house is `r exp(0.2353)`, while holding other variable fixed;the odds ratio of low satisfaction vs medium/high satisfaction between living in tower block and residents not living in tower block is `r exp(-0.5010)`, while holding other variable fixed.
 
 #### 4）
 
@@ -154,9 +160,11 @@ m_prop = rowSums(housing_df[,3:5])
 res_pearson_prop = (housing_df[,3:5]-pi_prop*m_prop)/sqrt(pi_prop*m_prop)
 res_pearson_prop %>%
   mutate(
-    contact = c(rep("low", 3), rep("high",3)),
+    contact_level = c(rep("low", 3), rep("high",3)),
     house_type = rep(c("Tower_block", "Apartment", "House"), 2)
   ) %>%
   knitr::kable()
 ```
+
+The largest discrepancy between the observed frequencies and expected frequencies estimated from the model happened when the contact level is high, housing type is house, and satisfactory level is high. It has the largest pearson residual of -1.48.
 

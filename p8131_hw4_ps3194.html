@@ -692,6 +692,14 @@ summary(housing_prop)</code></pre>
 ## 
 ## Residual Deviance: 3610.286 
 ## AIC: 3620.286</code></pre>
+<pre class="r"><code># exponentiate the coefficients for interpretations
+exp(0.2524) #contact_levellow</code></pre>
+<pre><code>## [1] 1.287111</code></pre>
+<pre class="r"><code>exp(0.2353) #house_typeHouse       </code></pre>
+<pre><code>## [1] 1.265288</code></pre>
+<pre class="r"><code>exp(-0.5010) #house_typeTower_block  </code></pre>
+<pre><code>## [1] 0.6059244</code></pre>
+<p>The fitted model told us that: the odds ratio of low satisfaction vs medium/high satisfaction between residents with low contact level and residents with high contact level is 1.2871108, while holding other variable fixed;the odds ratio of low satisfaction vs medium/high satisfaction between residents living in house and residents not living in house is 1.2652883, while holding other variable fixed;the odds ratio of low satisfaction vs medium/high satisfaction between living in tower block and residents not living in tower block is 0.6059244, while holding other variable fixed.</p>
 </div>
 <div id="section-3" class="section level4">
 <h4>4）</h4>
@@ -700,7 +708,7 @@ m_prop = rowSums(housing_df[,3:5])
 res_pearson_prop = (housing_df[,3:5]-pi_prop*m_prop)/sqrt(pi_prop*m_prop)
 res_pearson_prop %&gt;%
   mutate(
-    contact = c(rep(&quot;low&quot;, 3), rep(&quot;high&quot;,3)),
+    contact_level = c(rep(&quot;low&quot;, 3), rep(&quot;high&quot;,3)),
     house_type = rep(c(&quot;Tower_block&quot;, &quot;Apartment&quot;, &quot;House&quot;), 2)
   ) %&gt;%
   knitr::kable()</code></pre>
@@ -710,7 +718,7 @@ res_pearson_prop %&gt;%
 <th align="right">sat_low</th>
 <th align="right">sat_med</th>
 <th align="right">sat_high</th>
-<th align="left">contact</th>
+<th align="left">contact_level</th>
 <th align="left">house_type</th>
 </tr>
 </thead>
@@ -759,6 +767,7 @@ res_pearson_prop %&gt;%
 </tr>
 </tbody>
 </table>
+<p>The largest discrepancy between the observed frequencies and expected frequencies estimated from the model happened when the contact level is high, housing type is house, and satisfactory level is high. It has the largest pearson residual of -1.48.</p>
 </div>
 
 
