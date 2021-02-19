@@ -1,0 +1,32 @@
+---
+title: "p8131_hw4_ps3194"
+author: "Pangsibo Shen"
+date: "2/19/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+contact_level = c(rep("low", 3), rep("high",3))
+house_type=rep(c("Tower block", "Apartment", "House"), 2)
+sat_low = c(65,130,67,34,141,130)
+sat_med = c(54,76,48,47,116,105)
+sat_high = c(100,111,62,100,191,104)
+
+housing_df =
+  tibble(contact_level,house_type,sat_low,sat_med,sat_high) %>%
+  mutate(
+    total = sat_low + sat_med+ sat_high,
+    sat_low_pct = (sat_low/total)*100,
+    sat_med_pct = (sat_med/total)*100,
+    sat_high_pct = (sat_high/total)*100
+         ) %>%
+  select(contact_level,house_type,sat_low_pct,sat_med_pct, sat_high_pct) %>%
+  knitr::kable()
+
+housing_df
+```
+
